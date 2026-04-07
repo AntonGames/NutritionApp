@@ -1,0 +1,17 @@
+timezone: Europe/Vilnius
+user:
+  name: Your Name
+  height_cm: 180
+  age: 30
+  sex: unspecified
+  start_weight_kg: 100
+  goal_weight_kg: 85
+targets:
+  daily_calories: 2400
+  protein_g: 180
+  fat_g: 75
+  carbs_g: 250
+preferences:
+  protein_floor_g: 170
+  weekly_workout_goal: 3
+  weekly_weight_change_goal_kg: -0.5

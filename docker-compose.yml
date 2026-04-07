@@ -1,0 +1,13 @@
+services:
+  nutrition-app:
+    build: .
+    container_name: nutrition-app
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+

@@ -1,0 +1,65 @@
+rest_command:
+  nutrition_log_weight:
+    url: "http://nutrition-app:8000/api/weights"
+    method: POST
+    headers:
+      content-type: "application/json"
+      x-api-key: !secret nutrition_tracker_api_key
+    payload: >
+      {
+        "weight_kg": {{ weight_kg }},
+        "note": "{{ note | default('') }}"
+      }
+
+  nutrition_log_workout:
+    url: "http://nutrition-app:8000/api/workouts"
+    method: POST
+    headers:
+      content-type: "application/json"
+      x-api-key: !secret nutrition_tracker_api_key
+    payload: >
+      {
+        "description": "{{ description }}",
+        "duration_min": {{ duration_min | int }},
+        "calories_burned": {{ calories_burned | float }},
+        "avg_hr": {{ avg_hr | default('null') }},
+        "note": "{{ note | default('') }}"
+      }
+
+rest:
+  - resource: "http://nutrition-app:8000/api/summary/daily"
+    headers:
+      x-api-key: !secret nutrition_tracker_api_key
+    scan_interval: 900
+    sensor:
+      - name: Nutrition Calories Left
+        value_template: "{{ value_json.remaining.calories }}"
+        unit_of_measurement: "kcal"
+      - name: Nutrition Protein Total
+        value_template: "{{ value_json.food.protein_g }}"
+        unit_of_measurement: "g"
+      - name: Nutrition Weight
+        value_template: "{{ value_json.weight_kg }}"
+        unit_of_measurement: "kg"
+
+input_number:
+  nutrition_weight_entry:
+    name: Nutrition Weight Entry
+    min: 40
+    max: 250
+    step: 0.1
+
+input_text:
+  nutrition_weight_note:
+    name: Nutrition Weight Note
+    max: 120
+
+script:
+  nutrition_save_weight:
+    alias: Save nutrition weight
+    sequence:
+      - action: rest_command.nutrition_log_weight
+        data:
+          weight_kg: "{{ states('input_number.nutrition_weight_entry') }}"
+          note: "{{ states('input_text.nutrition_weight_note') }}"
+

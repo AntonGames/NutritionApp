@@ -1,0 +1,169 @@
+openapi: 3.1.0
+info:
+  title: Nutrition Tracker Sheets API
+  version: 1.0.0
+servers:
+  - url: https://SCRIPT_WEB_APP_URL
+paths:
+  /:
+    post:
+      operationId: postNutritionEvent
+      summary: Create or update a nutrition tracking event in Google Sheets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/InitDayRequest'
+                - $ref: '#/components/schemas/LogWeightRequest'
+                - $ref: '#/components/schemas/LogMealRequest'
+                - $ref: '#/components/schemas/LogWorkoutRequest'
+      responses:
+        '200':
+          description: Successful write
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+    get:
+      operationId: getDaySummary
+      summary: Get a daily summary from Google Sheets
+      parameters:
+        - in: query
+          name: action
+          required: true
+          schema:
+            type: string
+            enum: [summary]
+        - in: query
+          name: token
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: date
+          required: false
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+      responses:
+        '200':
+          description: Daily summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummaryResponse'
+components:
+  schemas:
+    GenericResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        action: { type: string }
+        date: { type: string }
+        rowsAdded: { type: integer }
+        weight: { type: number }
+        calories: { type: number }
+        error: { type: string }
+    BaseRequest:
+      type: object
+      properties:
+        token: { type: string }
+        date:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+    InitDayRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          required: [action, date]
+          properties:
+            action:
+              type: string
+              enum: [init_day]
+    LogWeightRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          required: [action, date, weight]
+          properties:
+            action:
+              type: string
+              enum: [log_weight]
+            weight:
+              type: number
+    MealComponent:
+      type: object
+      required: [description, calories, protein, fat, carbs]
+      properties:
+        description: { type: string }
+        componentType: { type: string }
+        category: { type: string }
+        calories: { type: number }
+        protein: { type: number }
+        fat: { type: number }
+        carbs: { type: number }
+    LogMealRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          required: [action, date, components]
+          properties:
+            action:
+              type: string
+              enum: [log_meal]
+            time:
+              type: string
+              pattern: '^\d{2}:\d{2}$'
+            source:
+              type: string
+            confidence:
+              type: string
+              enum: [high, medium, low]
+            comment:
+              type: string
+            components:
+              type: array
+              items:
+                $ref: '#/components/schemas/MealComponent'
+    LogWorkoutRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          required: [action, date, exerciseCalories]
+          properties:
+            action:
+              type: string
+              enum: [log_workout]
+            time:
+              type: string
+              pattern: '^\d{2}:\d{2}$'
+            durationMin:
+              type: number
+            exerciseCalories:
+              type: number
+            avgHr:
+              type: number
+            description:
+              type: string
+    DailySummaryResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        date: { type: string }
+        weight: { type: number }
+        calorieTarget: { type: number }
+        proteinTarget: { type: number }
+        fatTarget: { type: number }
+        carbTarget: { type: number }
+        foodCalories: { type: number }
+        protein: { type: number }
+        fat: { type: number }
+        carbs: { type: number }
+        exerciseCalories: { type: number }
+        netCalories: { type: number }
+        caloriesLeft: { type: number }
+        proteinLeft: { type: number }
+        fatLeft: { type: number }
+        carbLeft: { type: number }

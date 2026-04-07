@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nutrition Tracker</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Pi-hosted nutrition workflow</p>
+          <h1>Фото еды, журнал веса и тренировки в одной системе</h1>
+          <p class="lede">
+            Фото анализируется, запись попадает в базу, а Excel-файл обновляется автоматически.
+          </p>
+        </div>
+        <div class="hero-card">
+          <h2>Сегодня</h2>
+          <div class="kpi-grid">
+            <article>
+              <span>Калории</span>
+              <strong>{{ summary.food.calories }}</strong>
+            </article>
+            <article>
+              <span>Осталось</span>
+              <strong>{{ summary.remaining.calories }}</strong>
+            </article>
+            <article>
+              <span>Белок</span>
+              <strong>{{ summary.food.protein_g }} г</strong>
+            </article>
+            <article>
+              <span>Вес</span>
+              <strong>{{ summary.weight_kg if summary.weight_kg is not none else "—" }}</strong>
+            </article>
+          </div>
+          <p class="meta">
+            Excel export: <code>{{ workbook_path }}</code>
+          </p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Загрузить фото еды</h2>
+            <span>AI + Excel</span>
+          </div>
+          <form id="meal-form">
+            <label>
+              Фото
+              <input type="file" name="photo" accept="image/*" required />
+            </label>
+            <label>
+              Комментарий
+              <textarea name="note" rows="3" placeholder="Например: поздний ужин, домашняя еда"></textarea>
+            </label>
+            <div class="row">
+              <label>
+                Дата
+                <input type="date" name="logged_date" />
+              </label>
+              <label>
+                Время
+                <input type="time" name="logged_time" />
+              </label>
+            </div>
+            <button type="submit">Проанализировать и сохранить</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Вес</h2>
+            <span>Быстрый ввод</span>
+          </div>
+          <form id="weight-form">
+            <label>
+              Вес, кг
+              <input type="number" step="0.1" min="1" name="weight_kg" required />
+            </label>
+            <label>
+              Комментарий
+              <input type="text" name="note" placeholder="Например: после сна" />
+            </label>
+            <button type="submit">Сохранить вес</button>
+          </form>
+
+          <div class="panel-header secondary">
+            <h2>Тренировка</h2>
+            <span>Кардио / зал</span>
+          </div>
+          <form id="workout-form">
+            <label>
+              Описание
+              <input type="text" name="description" required placeholder="Силовая, бег, прогулка" />
+            </label>
+            <div class="row">
+              <label>
+                Минуты
+                <input type="number" name="duration_min" min="1" />
+              </label>
+              <label>
+                Ккал
+                <input type="number" name="calories_burned" min="0" step="1" required />
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                Средний пульс
+                <input type="number" name="avg_hr" min="1" />
+              </label>
+              <label>
+                Комментарий
+                <input type="text" name="note" placeholder="Например: вечерняя тренировка" />
+              </label>
+            </div>
+            <button type="submit">Сохранить тренировку</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Подсказки на сегодня</h2>
+            <span>Правила, не магия</span>
+          </div>
+          <ul class="tips">
+            {% for tip in summary.suggestions %}
+            <li>{{ tip }}</li>
+            {% endfor %}
+          </ul>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Последние записи</h2>
+            <span>Живой журнал</span>
+          </div>
+          <ul class="events" id="recent-events">
+            {% for event in recent_events %}
+            <li>
+              <strong>{{ event.title }}</strong>
+              <span>{{ event.summary }}</span>
+              <time>{{ event.logged_at }}</time>
+            </li>
+            {% endfor %}
+          </ul>
+        </article>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="panel-header">
+          <h2>Результат</h2>
+          <span>{% if api_key_required %}API key required{% else %}Open access{% endif %}</span>
+        </div>
+        <label class="api-key">
+          API key
+          <input id="api-key" type="password" placeholder="Только если включен NUTRITION_API_KEY" />
+        </label>
+        <pre id="result">Готово к работе.</pre>
+      </section>
+    </main>
+    <script>
+      window.NUTRITION_UI = {
+        apiKeyRequired: {{ "true" if api_key_required else "false" }}
+      };
+    </script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+"""Nutrition tracking app."""
