@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nutrition-app"
 version = "0.1.0"
-description = "Self-hosted nutrition tracker with photo logging, Excel export, and Home Assistant integration."
+description = "Self-hosted nutrition tracker with GPT Actions, Excel export, and Home Assistant integration."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

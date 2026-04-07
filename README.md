@@ -2,71 +2,51 @@
 
 Self-hosted nutrition logging for your Raspberry Pi / Home Assistant stack.
 
-This project replaces the older Google Apps Script prototype in this folder with a more reliable setup:
+This project now supports two modes:
 
-- upload a meal photo through a normal web page or HTTP API
-- analyze the meal with OpenAI vision
-- store meals, workouts, and weight in SQLite
-- regenerate a Russian-friendly Excel workbook automatically
-- expose clean JSON endpoints for Home Assistant, dashboards, or future mobile clients
+1. Recommended: `ChatGPT Plus + Custom GPT + Actions -> your Pi -> SQLite -> Excel/HA`
+2. Optional: direct server-side photo analysis through the OpenAI API
 
-## Why this design is more reliable
+The first mode is the cheaper one. In that setup, ChatGPT analyzes the meal photo inside the chat, then calls your Pi through Actions. Your server only stores structured data, builds summaries, updates the workbook, and feeds Home Assistant.
 
-The failed approach in [`nutrition_tracker_system_bundle`](./nutrition_tracker_system_bundle) treated Google Sheets as both UI and database. That works for a demo, but it becomes fragile once you want image uploads, corrections, auditing, or stable automations.
+## Recommended architecture
 
-The new flow is:
+`Photo in ChatGPT -> Custom GPT with Actions -> Nutrition App API on Pi -> SQLite -> Excel export + Home Assistant`
 
-`Photo/UI/HA -> FastAPI -> SQLite -> Excel export`
+Why this is the best default:
 
-That gives you:
-
-- a normal HTTP service on your Pi
+- no Google Apps Script redirects
+- no Google Sheets used as a fragile backend
+- no OpenAI API key required on the server
 - durable local storage
-- easier debugging and tests
-- a clean Excel file for reporting instead of using Excel as a backend database
+- clean workbook export
+- easy HA sensors and automations
 
-More detail: [`docs/legacy_analysis.md`](./docs/legacy_analysis.md)
+The older failed Apps Script approach is documented in [docs/legacy_analysis.md](./docs/legacy_analysis.md).
 
-## What’s included
+## What this app does
+
+- stores meals, weight, and workouts in SQLite
+- builds daily and weekly summaries
+- generates a Russian-friendly Excel workbook
+- exposes write endpoints for Home Assistant
+- exposes GPT Actions endpoints for a Custom GPT
+- optionally supports direct photo upload if you decide to add a server-side OpenAI API key later
+
+## Main files
 
 - `src/nutrition_app/main.py`
-  The FastAPI app and mobile-friendly upload UI.
+  FastAPI app, UI, GPT Actions endpoints, and workbook download
 - `src/nutrition_app/storage.py`
-  SQLite schema and CRUD logic.
-- `src/nutrition_app/services/meal_analyzer.py`
-  OpenAI-based photo analysis.
+  SQLite schema and persistence
 - `src/nutrition_app/services/summaries.py`
-  Deterministic daily/weekly summaries and suggestions.
+  Deterministic suggestions and progress logic
 - `src/nutrition_app/services/workbook.py`
-  Automatic `.xlsx` export with Russian sheet names.
+  Excel export
 - `deploy/home_assistant/package_example.yaml`
-  Example Home Assistant package for logging and sensors.
-
-## Main assumptions
-
-- Meal photos are the primary AI input.
-- Weight and workouts are logged manually or via Home Assistant.
-- SQLite is the source of truth.
-- Excel is the human-readable report/export layer.
-- Your Pi runs Docker or plain Python.
-
-If you later want smartwatch import, Telegram bot input, or GPT Action support, this design can be extended without changing the storage model.
-
-## Project structure
-
-```text
-config/
-  profile.yaml
-  profile.example.yaml
-data/
-  exports/
-src/nutrition_app/
-  main.py
-  storage.py
-  services/
-deploy/home_assistant/
-tests/
-```
+  Home Assistant package template
+- `deploy/gpt_actions/custom_gpt_instructions.md`
+  Ready-to-paste instructions for your Custom GPT
 
 ## Configuration
 
@@ -96,7 +76,7 @@ preferences:
 
 ### 2. Environment
 
-Copy [`.env.example`](./.env.example) to `.env` and fill in secrets:
+Copy [`.env.example`](./.env.example) to `.env`:
 
 ```env
 NUTRITION_PROFILE_PATH=config/profile.yaml
@@ -104,17 +84,18 @@ NUTRITION_DB_PATH=data/nutrition.db
 NUTRITION_WORKBOOK_PATH=data/exports/nutrition_tracker.xlsx
 NUTRITION_UPLOAD_DIR=data/uploads
 NUTRITION_API_KEY=change-me
-NUTRITION_OPENAI_API_KEY=sk-...
+NUTRITION_OPENAI_API_KEY=
 NUTRITION_OPENAI_MODEL=gpt-4.1-mini
 NUTRITION_MAX_UPLOAD_MB=8
 NUTRITION_EXPORT_ON_WRITE=true
 ```
 
-Important notes:
+Notes:
 
-- `NUTRITION_API_KEY` protects write endpoints.
-- `NUTRITION_OPENAI_API_KEY` is required for meal photo analysis.
-- The workbook export is regenerated after each write when `NUTRITION_EXPORT_ON_WRITE=true`.
+- `NUTRITION_API_KEY` is the shared secret for GPT Actions and protected write endpoints.
+- `NUTRITION_OPENAI_API_KEY` is optional.
+- leave `NUTRITION_OPENAI_API_KEY` empty if you only want the cheaper GPT Actions flow
+- set `NUTRITION_OPENAI_API_KEY` only if you want the local web UI to analyze uploaded photos directly
 
 ## Run locally with Python
 
@@ -129,122 +110,146 @@ python -m uvicorn nutrition_app.main:app --reload
 Open:
 
 - UI: `http://localhost:8000/`
-- OpenAPI docs: `http://localhost:8000/docs`
+- FastAPI docs: `http://localhost:8000/docs`
+- GPT Actions schema: `http://localhost:8000/api/actions/openapi.yaml`
 - Workbook download: `http://localhost:8000/api/export/workbook`
 
-## Run on Raspberry Pi with Docker
+## Run on Raspberry Pi
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/AntonGames/NutritionApp.git
 cd NutritionApp
 cp .env.example .env
 nano .env
 docker compose up -d --build
 ```
 
-The included [`Dockerfile`](./Dockerfile) and [`docker-compose.yml`](./docker-compose.yml) are Pi-friendly. The official Python base image is multi-arch, so this should work on a Pi 5 without changing the image name.
+If you are using the Home Assistant SSH add-on fallback instead of Docker, the same `.env` values still apply.
 
-Recommended next step on the Pi:
+## GPT Actions setup
 
-- keep the service private on your LAN
-- put it behind your Home Assistant reverse proxy or Nginx Proxy Manager
-- do not expose it publicly without auth
+### Important networking note
 
-## API overview
+Your local URL such as `http://192.168.0.243:8000` is fine for the web UI and Home Assistant on your LAN, but ChatGPT Actions will need a URL that ChatGPT can reach.
 
-### `GET /api/health`
+Inference from the architecture:
 
-Health check.
+- a private `192.168.x.x` address is not enough for Actions
+- you will need a public HTTPS URL in front of this app
 
-### `GET /api/summary/daily`
+Typical ways to do that:
 
-Optional query:
+- Cloudflare Tunnel
+- your own reverse proxy + domain + TLS
+- another secure HTTPS tunnel you trust
 
-- `target_date=YYYY-MM-DD`
+### Step-by-step
 
-Returns the current day totals, targets, remaining macros, weight, and suggestions.
+1. Run the app and make it reachable through a public HTTPS URL.
+2. Open your running schema:
+   - `https://YOUR_PUBLIC_DOMAIN/api/actions/openapi.yaml`
+3. Create a Custom GPT.
+4. Add an Action using that schema URL or paste the schema manually.
+5. Configure authentication as API key:
+   - header name: `X-API-Key`
+   - value: your `NUTRITION_API_KEY`
+6. Paste the instructions from [deploy/gpt_actions/custom_gpt_instructions.md](./deploy/gpt_actions/custom_gpt_instructions.md).
+7. Save and test with:
+   - a meal photo
+   - a weight message
+   - a workout message
 
-### `GET /api/summary/weekly`
+## GPT Actions API
 
-Returns weekly rollups for trend tracking.
+### `GET /api/actions/openapi.yaml`
 
-### `GET /api/events/recent`
+Returns a minimal OpenAPI document for Custom GPT Actions.
 
-Returns the latest saved meals, workouts, and weight entries.
+### `POST /api/actions`
 
-### `GET /api/export/workbook`
+Single GPT-friendly endpoint with four actions:
 
-Generates and downloads the current Excel workbook.
+- `init_day`
+- `log_meal`
+- `log_weight`
+- `log_workout`
 
-### `POST /api/meals/photo`
-
-Multipart form fields:
-
-- `photo` required image file
-- `note` optional
-- `logged_date` optional `YYYY-MM-DD`
-- `logged_time` optional `HH:MM`
-
-This endpoint:
-
-1. uploads the image
-2. calls OpenAI vision
-3. stores structured components
-4. refreshes the workbook export
-5. returns the meal analysis and the updated daily summary
-
-### `POST /api/meals/manual`
-
-Fallback/manual correction endpoint for meals.
-
-Example:
+The response is flat and GPT-friendly. It always includes the updated daily summary:
 
 ```json
 {
-  "meal_name": "Lunch",
-  "components": [
-    {
-      "description": "Chicken breast",
-      "category": "protein",
-      "estimated_grams": 180,
-      "calories": 300,
-      "protein_g": 42,
-      "fat_g": 8,
-      "carbs_g": 0
-    }
-  ]
+  "ok": true,
+  "action": "log_meal",
+  "date": "2026-04-07",
+  "entityId": "uuid",
+  "summary": {
+    "date": "2026-04-07",
+    "weight": 108.4,
+    "calorieTarget": 2400,
+    "proteinTarget": 180,
+    "fatTarget": 75,
+    "carbTarget": 250,
+    "foodCalories": 830,
+    "protein": 40,
+    "fat": 56,
+    "carbs": 35,
+    "exerciseCalories": 0,
+    "netCalories": 830,
+    "caloriesLeft": 1570,
+    "proteinLeft": 140,
+    "fatLeft": 19,
+    "carbLeft": 215,
+    "mealsCount": 1,
+    "workoutsCount": 0,
+    "suggestions": [
+      "Добери еще примерно 130.0 г белка..."
+    ]
+  }
 }
 ```
 
-### `POST /api/weights`
+### `GET /api/actions/summary`
 
-Example:
+Query:
 
-```json
-{
-  "weight_kg": 108.4,
-  "note": "after waking up"
-}
+- `target_date=YYYY-MM-DD` optional
+
+Returns the same flat summary object without writing data.
+
+## Local API and UI endpoints
+
+These still exist and are useful for Home Assistant and local testing:
+
+- `GET /api/health`
+- `GET /api/summary/daily`
+- `GET /api/summary/weekly`
+- `GET /api/events/recent`
+- `GET /api/export/workbook`
+- `POST /api/meals/manual`
+- `POST /api/weights`
+- `POST /api/workouts`
+
+## Optional server-side photo analysis
+
+If you later decide you want the Pi itself to accept image uploads and call OpenAI directly, set:
+
+```env
+NUTRITION_OPENAI_API_KEY=sk-...
 ```
 
-### `POST /api/workouts`
+Then the local UI form and this endpoint become usable:
 
-Example:
+- `POST /api/meals/photo`
 
-```json
-{
-  "description": "Strength training",
-  "duration_min": 55,
-  "calories_burned": 420,
-  "avg_hr": 132
-}
-```
+That mode is optional and not required for the subscription-only GPT Actions setup.
 
 ## Excel workbook output
 
-The exported workbook is saved to `data/exports/nutrition_tracker.xlsx` by default.
+The workbook is saved by default to:
 
-Sheets:
+`data/exports/nutrition_tracker.xlsx`
+
+Sheets include:
 
 - `Главная`
 - `Настройки`
@@ -254,7 +259,7 @@ Sheets:
 - `Дни`
 - `Недели`
 
-This workbook is intended to be pleasant to read, filter, and review in Excel or LibreOffice, while the database remains the actual backend.
+SQLite is still the source of truth. Excel is the reporting layer.
 
 ## Home Assistant integration
 
@@ -262,42 +267,32 @@ See [`deploy/home_assistant/package_example.yaml`](./deploy/home_assistant/packa
 
 It includes:
 
-- `rest_command` examples for weight/workout logging
-- `rest` sensors for the daily summary
-- simple helper entities for a weight-entry flow
+- `rest_command` examples for weight and workout logging
+- `rest` sensors for daily summary values
+- helper entities for quick weight entry
 
-Practical setup:
+Recommended split:
 
-1. Put the service on the same Docker network as Home Assistant, or expose it on your LAN.
-2. Add a secret in `secrets.yaml`:
-
-```yaml
-nutrition_tracker_api_key: change-me
-```
-
-3. Copy the package example into your HA packages folder and adapt hostnames.
-
-The cleanest first version is:
-
-- use the Nutrition App UI for meal photo uploads
-- use HA for reminders, dashboards, and weight/workout quick actions
+- meals through Custom GPT
+- weight/workouts through HA or the local UI
+- workbook review through the export endpoint
 
 ## Suggestions logic
 
-The app’s coaching suggestions are deterministic and local.
+Daily suggestions are deterministic and local.
 
-That was deliberate:
+That is intentional:
 
-- photo estimation already depends on AI
-- daily coaching should still work if you don’t want extra model calls
+- meal estimation can come from GPT
+- daily coaching should still work without extra API calls
 - deterministic rules are easier to trust and debug
 
-Current suggestions look at:
+The logic currently looks at:
 
-- protein intake vs your minimum
+- protein vs target floor
 - calories vs target
-- weekly workout volume
-- recent weight direction
+- weekly workouts
+- short-term weight direction
 - logging consistency
 
 ## Tests
@@ -311,23 +306,21 @@ pytest
 Covered flows:
 
 - protected write endpoints
-- meal logging updates daily summary
-- workout logging updates exercise calories
+- manual meal logging updates daily summary
+- GPT Actions logging updates the flat summary
 - workbook export contains the expected Russian sheets
 
 ## Known limitations
 
-- The first version assumes food photos, not workout screenshots.
-- Meal estimation is only as good as the photo quality and model output.
-- HEIC support is not implemented yet; JPEG/PNG/WebP are the safe formats.
-- The UI is intentionally lightweight, not a full mobile app.
+- ChatGPT Actions require a reachable HTTPS URL, not just a LAN IP
+- food estimation quality still depends on the model and the photo
+- the Pi UI is intentionally simple and not a full native mobile app
+- HEIC handling is still not implemented
 
 ## Best next improvements
 
-If you want to keep iterating after this base is running, the best upgrades would be:
-
-1. add a meal correction screen for editing AI-estimated components
-2. support Telegram or WhatsApp ingestion
-3. import workouts from Apple Health / Garmin / Strava
-4. add weekly PDF or email reports from Home Assistant
-5. add GPT Action or chat bot access on top of the same API
+1. Add Google Sheets sync as a secondary mirror on top of SQLite.
+2. Add a correction screen for editing GPT-estimated meals after logging.
+3. Add Telegram ingestion.
+4. Import workouts from Apple Health, Garmin, or Strava.
+5. Add automatic weekly reports in Home Assistant.

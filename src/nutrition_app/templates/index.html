@@ -11,9 +11,10 @@
       <section class="hero">
         <div>
           <p class="eyebrow">Pi-hosted nutrition workflow</p>
-          <h1>Фото еды, журнал веса и тренировки в одной системе</h1>
+          <h1>Фото еды через ChatGPT, журнал веса и тренировки в одной системе</h1>
           <p class="lede">
-            Фото анализируется, запись попадает в базу, а Excel-файл обновляется автоматически.
+            Основной сценарий теперь такой: вы отправляете фото в Custom GPT, GPT оценивает блюдо и через Actions
+            записывает данные на ваш Pi. База, сводки, Excel и Home Assistant при этом остаются локальными.
           </p>
         </div>
         <div class="hero-card">
@@ -44,9 +45,10 @@
 
       <section class="grid">
         <article class="panel">
+          {% if photo_upload_enabled %}
           <div class="panel-header">
             <h2>Загрузить фото еды</h2>
-            <span>AI + Excel</span>
+            <span>Optional server-side AI</span>
           </div>
           <form id="meal-form">
             <label>
@@ -69,6 +71,18 @@
             </div>
             <button type="submit">Проанализировать и сохранить</button>
           </form>
+          {% else %}
+          <div class="panel-header">
+            <h2>Фото еды через Custom GPT</h2>
+            <span>Без server-side API billing</span>
+          </div>
+          <ul class="tips">
+            <li>Откройте свой Custom GPT, загрузите туда фото еды и попросите записать приём пищи.</li>
+            <li>GPT сам оценит компоненты и вызовет <code>/api/actions</code> на этом сервере.</li>
+            <li>Схема для Actions доступна по адресу <code>/api/actions/openapi.yaml</code>.</li>
+            <li>Если захотите вернуть анализ прямо на сервере, добавьте <code>NUTRITION_OPENAI_API_KEY</code>.</li>
+          </ul>
+          {% endif %}
         </article>
 
         <article class="panel">

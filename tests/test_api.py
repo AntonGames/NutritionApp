@@ -81,6 +81,60 @@ def test_manual_meal_updates_daily_summary(app_state):
     assert summary["meals_count"] == 1
 
 
+def test_action_meal_updates_flat_summary(app_state):
+    app = create_app(app_state)
+    client = TestClient(app)
+    headers = {"X-API-Key": "secret"}
+
+    response = client.post(
+        "/api/actions",
+        json={
+            "action": "log_meal",
+            "mealName": "Lunch",
+            "confidence": "medium",
+            "components": [
+                {
+                    "description": "Chicken",
+                    "componentType": "food",
+                    "category": "protein",
+                    "estimatedGrams": 150,
+                    "calories": 280,
+                    "protein": 32,
+                    "fat": 14,
+                    "carbs": 0,
+                },
+                {
+                    "description": "Rice",
+                    "componentType": "food",
+                    "category": "carb",
+                    "estimatedGrams": 180,
+                    "calories": 240,
+                    "protein": 5,
+                    "fat": 1,
+                    "carbs": 52,
+                },
+            ],
+        },
+        headers=headers,
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["action"] == "log_meal"
+    assert payload["summary"]["foodCalories"] == 520.0
+    assert payload["summary"]["protein"] == 37.0
+    assert payload["summary"]["mealsCount"] == 1
+
+
+def test_actions_openapi_route_exists(app_state):
+    app = create_app(app_state)
+    client = TestClient(app)
+
+    response = client.get("/api/actions/openapi.yaml")
+    assert response.status_code == 200
+    assert "postNutritionEvent" in response.text
+    assert "/api/actions/summary" in response.text
+
+
 def test_api_key_required_for_write(app_state):
     app = create_app(app_state)
     client = TestClient(app)

@@ -1,0 +1,264 @@
+from __future__ import annotations
+
+import yaml
+
+
+def build_actions_openapi(server_url: str) -> str:
+    document = {
+        "openapi": "3.1.0",
+        "info": {
+            "title": "Nutrition Tracker GPT Actions API",
+            "version": "1.0.0",
+            "description": (
+                "Use this API from a Custom GPT to log meals, weight, workouts, "
+                "and retrieve a flat daily summary."
+            ),
+        },
+        "servers": [{"url": server_url}],
+        "security": [{"ApiKeyAuth": []}],
+        "paths": {
+            "/api/actions": {
+                "post": {
+                    "operationId": "postNutritionEvent",
+                    "summary": "Create or update a nutrition tracking event",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {"$ref": "#/components/schemas/InitDayRequest"},
+                                        {"$ref": "#/components/schemas/LogMealRequest"},
+                                        {"$ref": "#/components/schemas/LogWeightRequest"},
+                                        {"$ref": "#/components/schemas/LogWorkoutRequest"},
+                                    ]
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Successful response with updated daily summary",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ActionResponse"}
+                                }
+                            },
+                        }
+                    },
+                }
+            },
+            "/api/actions/summary": {
+                "get": {
+                    "operationId": "getNutritionSummary",
+                    "summary": "Get the current or requested day summary",
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "target_date",
+                            "required": False,
+                            "schema": {
+                                "type": "string",
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            },
+                            "description": "Optional local date in YYYY-MM-DD format.",
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Flat daily summary payload",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ActionResponse"}
+                                }
+                            },
+                        }
+                    },
+                }
+            },
+        },
+        "components": {
+            "securitySchemes": {
+                "ApiKeyAuth": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-API-Key",
+                }
+            },
+            "schemas": {
+                "ActionResponse": {
+                    "type": "object",
+                    "required": ["ok", "action", "date", "summary"],
+                    "properties": {
+                        "ok": {"type": "boolean"},
+                        "action": {
+                            "type": "string",
+                            "enum": ["init_day", "log_meal", "log_weight", "log_workout", "summary"],
+                        },
+                        "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                        "entityId": {"type": ["string", "null"]},
+                        "summary": {"$ref": "#/components/schemas/FlatSummary"},
+                    },
+                },
+                "FlatSummary": {
+                    "type": "object",
+                    "required": [
+                        "date",
+                        "calorieTarget",
+                        "proteinTarget",
+                        "fatTarget",
+                        "carbTarget",
+                        "foodCalories",
+                        "protein",
+                        "fat",
+                        "carbs",
+                        "exerciseCalories",
+                        "netCalories",
+                        "caloriesLeft",
+                        "proteinLeft",
+                        "fatLeft",
+                        "carbLeft",
+                        "mealsCount",
+                        "workoutsCount",
+                        "suggestions",
+                    ],
+                    "properties": {
+                        "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                        "weight": {"type": ["number", "null"]},
+                        "calorieTarget": {"type": "number"},
+                        "proteinTarget": {"type": "number"},
+                        "fatTarget": {"type": "number"},
+                        "carbTarget": {"type": "number"},
+                        "foodCalories": {"type": "number"},
+                        "protein": {"type": "number"},
+                        "fat": {"type": "number"},
+                        "carbs": {"type": "number"},
+                        "exerciseCalories": {"type": "number"},
+                        "netCalories": {"type": "number"},
+                        "caloriesLeft": {"type": "number"},
+                        "proteinLeft": {"type": "number"},
+                        "fatLeft": {"type": "number"},
+                        "carbLeft": {"type": "number"},
+                        "mealsCount": {"type": "integer"},
+                        "workoutsCount": {"type": "integer"},
+                        "suggestions": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+                "BaseRequest": {
+                    "type": "object",
+                    "properties": {
+                        "date": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "description": "Optional local date. Defaults to today in Europe/Vilnius or your configured timezone.",
+                        }
+                    },
+                },
+                "InitDayRequest": {
+                    "allOf": [
+                        {"$ref": "#/components/schemas/BaseRequest"},
+                        {
+                            "type": "object",
+                            "required": ["action"],
+                            "properties": {
+                                "action": {
+                                    "type": "string",
+                                    "enum": ["init_day"],
+                                }
+                            },
+                        },
+                    ]
+                },
+                "LogWeightRequest": {
+                    "allOf": [
+                        {"$ref": "#/components/schemas/BaseRequest"},
+                        {
+                            "type": "object",
+                            "required": ["action", "weight"],
+                            "properties": {
+                                "action": {
+                                    "type": "string",
+                                    "enum": ["log_weight"],
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "pattern": "^\\d{2}:\\d{2}$",
+                                },
+                                "weight": {"type": "number"},
+                                "note": {"type": "string"},
+                            },
+                        },
+                    ]
+                },
+                "MealComponent": {
+                    "type": "object",
+                    "required": ["description", "calories", "protein", "fat", "carbs"],
+                    "properties": {
+                        "description": {"type": "string"},
+                        "componentType": {"type": "string"},
+                        "category": {"type": "string"},
+                        "estimatedGrams": {"type": "number"},
+                        "calories": {"type": "number"},
+                        "protein": {"type": "number"},
+                        "fat": {"type": "number"},
+                        "carbs": {"type": "number"},
+                    },
+                },
+                "LogMealRequest": {
+                    "allOf": [
+                        {"$ref": "#/components/schemas/BaseRequest"},
+                        {
+                            "type": "object",
+                            "required": ["action", "components"],
+                            "properties": {
+                                "action": {
+                                    "type": "string",
+                                    "enum": ["log_meal"],
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "pattern": "^\\d{2}:\\d{2}$",
+                                },
+                                "mealName": {"type": "string"},
+                                "source": {"type": "string"},
+                                "confidence": {
+                                    "type": "string",
+                                    "enum": ["high", "medium", "low"],
+                                },
+                                "comment": {"type": "string"},
+                                "components": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/MealComponent"},
+                                },
+                            },
+                        },
+                    ]
+                },
+                "LogWorkoutRequest": {
+                    "allOf": [
+                        {"$ref": "#/components/schemas/BaseRequest"},
+                        {
+                            "type": "object",
+                            "required": ["action", "description", "exerciseCalories"],
+                            "properties": {
+                                "action": {
+                                    "type": "string",
+                                    "enum": ["log_workout"],
+                                },
+                                "time": {
+                                    "type": "string",
+                                    "pattern": "^\\d{2}:\\d{2}$",
+                                },
+                                "description": {"type": "string"},
+                                "durationMin": {"type": "integer"},
+                                "exerciseCalories": {"type": "number"},
+                                "avgHr": {"type": "integer"},
+                                "note": {"type": "string"},
+                            },
+                        },
+                    ]
+                },
+            },
+        },
+    }
+    return yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
