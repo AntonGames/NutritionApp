@@ -25,14 +25,7 @@ def build_actions_openapi(server_url: str) -> str:
                         "required": True,
                         "content": {
                             "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {"$ref": "#/components/schemas/InitDayRequest"},
-                                        {"$ref": "#/components/schemas/LogMealRequest"},
-                                        {"$ref": "#/components/schemas/LogWeightRequest"},
-                                        {"$ref": "#/components/schemas/LogWorkoutRequest"},
-                                    ]
-                                }
+                                "schema": {"$ref": "#/components/schemas/NutritionActionRequest"}
                             }
                         },
                     },
@@ -147,12 +140,48 @@ def build_actions_openapi(server_url: str) -> str:
                 "BaseRequest": {
                     "type": "object",
                     "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": ["init_day", "log_meal", "log_weight", "log_workout"],
+                        },
                         "date": {
                             "type": "string",
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "description": "Optional local date. Defaults to today in Europe/Vilnius or your configured timezone.",
-                        }
+                        },
+                        "time": {
+                            "type": "string",
+                            "pattern": "^\\d{2}:\\d{2}$",
+                        },
                     },
+                },
+                "NutritionActionRequest": {
+                    "allOf": [
+                        {"$ref": "#/components/schemas/BaseRequest"},
+                        {
+                            "type": "object",
+                            "required": ["action"],
+                            "properties": {
+                                "weight": {"type": "number"},
+                                "mealName": {"type": "string"},
+                                "source": {"type": "string"},
+                                "confidence": {
+                                    "type": "string",
+                                    "enum": ["high", "medium", "low"],
+                                },
+                                "comment": {"type": "string"},
+                                "components": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/MealComponent"},
+                                },
+                                "description": {"type": "string"},
+                                "durationMin": {"type": "integer"},
+                                "exerciseCalories": {"type": "number"},
+                                "avgHr": {"type": "integer"},
+                                "note": {"type": "string"},
+                            },
+                        },
+                    ]
                 },
                 "InitDayRequest": {
                     "allOf": [
@@ -160,12 +189,7 @@ def build_actions_openapi(server_url: str) -> str:
                         {
                             "type": "object",
                             "required": ["action"],
-                            "properties": {
-                                "action": {
-                                    "type": "string",
-                                    "enum": ["init_day"],
-                                }
-                            },
+                            "properties": {"action": {"type": "string", "enum": ["init_day"]}},
                         },
                     ]
                 },
@@ -176,14 +200,7 @@ def build_actions_openapi(server_url: str) -> str:
                             "type": "object",
                             "required": ["action", "weight"],
                             "properties": {
-                                "action": {
-                                    "type": "string",
-                                    "enum": ["log_weight"],
-                                },
-                                "time": {
-                                    "type": "string",
-                                    "pattern": "^\\d{2}:\\d{2}$",
-                                },
+                                "action": {"type": "string", "enum": ["log_weight"]},
                                 "weight": {"type": "number"},
                                 "note": {"type": "string"},
                             },
@@ -211,14 +228,7 @@ def build_actions_openapi(server_url: str) -> str:
                             "type": "object",
                             "required": ["action", "components"],
                             "properties": {
-                                "action": {
-                                    "type": "string",
-                                    "enum": ["log_meal"],
-                                },
-                                "time": {
-                                    "type": "string",
-                                    "pattern": "^\\d{2}:\\d{2}$",
-                                },
+                                "action": {"type": "string", "enum": ["log_meal"]},
                                 "mealName": {"type": "string"},
                                 "source": {"type": "string"},
                                 "confidence": {
@@ -241,14 +251,7 @@ def build_actions_openapi(server_url: str) -> str:
                             "type": "object",
                             "required": ["action", "description", "exerciseCalories"],
                             "properties": {
-                                "action": {
-                                    "type": "string",
-                                    "enum": ["log_workout"],
-                                },
-                                "time": {
-                                    "type": "string",
-                                    "pattern": "^\\d{2}:\\d{2}$",
-                                },
+                                "action": {"type": "string", "enum": ["log_workout"]},
                                 "description": {"type": "string"},
                                 "durationMin": {"type": "integer"},
                                 "exerciseCalories": {"type": "number"},
