@@ -133,8 +133,9 @@ def test_actions_openapi_route_exists(app_state):
     assert response.status_code == 200
     assert "postNutritionEvent" in response.text
     assert "/api/actions/summary" in response.text
-    assert "NutritionActionRequest" in response.text
     assert "oneOf" not in response.text
+    assert "$ref: '#/components/schemas/NutritionActionRequest'" not in response.text
+    assert "type: object" in response.text
 
 
 def test_api_key_required_for_write(app_state):

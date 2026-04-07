@@ -25,7 +25,55 @@ def build_actions_openapi(server_url: str) -> str:
                         "required": True,
                         "content": {
                             "application/json": {
-                                "schema": {"$ref": "#/components/schemas/NutritionActionRequest"}
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["action"],
+                                    "properties": {
+                                        "action": {
+                                            "type": "string",
+                                            "enum": ["init_day", "log_meal", "log_weight", "log_workout"],
+                                        },
+                                        "date": {
+                                            "type": "string",
+                                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                            "description": "Optional local date.",
+                                        },
+                                        "time": {
+                                            "type": "string",
+                                            "pattern": "^\\d{2}:\\d{2}$",
+                                        },
+                                        "weight": {"type": "number"},
+                                        "mealName": {"type": "string"},
+                                        "source": {"type": "string"},
+                                        "confidence": {
+                                            "type": "string",
+                                            "enum": ["high", "medium", "low"],
+                                        },
+                                        "comment": {"type": "string"},
+                                        "components": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "required": ["description", "calories", "protein", "fat", "carbs"],
+                                                "properties": {
+                                                    "description": {"type": "string"},
+                                                    "componentType": {"type": "string"},
+                                                    "category": {"type": "string"},
+                                                    "estimatedGrams": {"type": "number"},
+                                                    "calories": {"type": "number"},
+                                                    "protein": {"type": "number"},
+                                                    "fat": {"type": "number"},
+                                                    "carbs": {"type": "number"},
+                                                },
+                                            },
+                                        },
+                                        "description": {"type": "string"},
+                                        "durationMin": {"type": "integer"},
+                                        "exerciseCalories": {"type": "number"},
+                                        "avgHr": {"type": "integer"},
+                                        "note": {"type": "string"},
+                                    },
+                                },
                             }
                         },
                     },
@@ -137,76 +185,6 @@ def build_actions_openapi(server_url: str) -> str:
                         "suggestions": {"type": "array", "items": {"type": "string"}},
                     },
                 },
-                "BaseRequest": {
-                    "type": "object",
-                    "properties": {
-                        "action": {
-                            "type": "string",
-                            "enum": ["init_day", "log_meal", "log_weight", "log_workout"],
-                        },
-                        "date": {
-                            "type": "string",
-                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                            "description": "Optional local date. Defaults to today in Europe/Vilnius or your configured timezone.",
-                        },
-                        "time": {
-                            "type": "string",
-                            "pattern": "^\\d{2}:\\d{2}$",
-                        },
-                    },
-                },
-                "NutritionActionRequest": {
-                    "allOf": [
-                        {"$ref": "#/components/schemas/BaseRequest"},
-                        {
-                            "type": "object",
-                            "required": ["action"],
-                            "properties": {
-                                "weight": {"type": "number"},
-                                "mealName": {"type": "string"},
-                                "source": {"type": "string"},
-                                "confidence": {
-                                    "type": "string",
-                                    "enum": ["high", "medium", "low"],
-                                },
-                                "comment": {"type": "string"},
-                                "components": {
-                                    "type": "array",
-                                    "items": {"$ref": "#/components/schemas/MealComponent"},
-                                },
-                                "description": {"type": "string"},
-                                "durationMin": {"type": "integer"},
-                                "exerciseCalories": {"type": "number"},
-                                "avgHr": {"type": "integer"},
-                                "note": {"type": "string"},
-                            },
-                        },
-                    ]
-                },
-                "InitDayRequest": {
-                    "allOf": [
-                        {"$ref": "#/components/schemas/BaseRequest"},
-                        {
-                            "type": "object",
-                            "required": ["action"],
-                            "properties": {"action": {"type": "string", "enum": ["init_day"]}},
-                        },
-                    ]
-                },
-                "LogWeightRequest": {
-                    "allOf": [
-                        {"$ref": "#/components/schemas/BaseRequest"},
-                        {
-                            "type": "object",
-                            "required": ["action", "weight"],
-                            "properties": {
-                                "action": {"type": "string", "enum": ["log_weight"]},
-                                "weight": {"type": "number"},
-                                "note": {"type": "string"},
-                            },
-                        },
-                    ]
-                },
                 "MealComponent": {
                     "type": "object",
                     "required": ["description", "calories", "protein", "fat", "carbs"],
@@ -221,46 +199,7 @@ def build_actions_openapi(server_url: str) -> str:
                         "carbs": {"type": "number"},
                     },
                 },
-                "LogMealRequest": {
-                    "allOf": [
-                        {"$ref": "#/components/schemas/BaseRequest"},
-                        {
-                            "type": "object",
-                            "required": ["action", "components"],
-                            "properties": {
-                                "action": {"type": "string", "enum": ["log_meal"]},
-                                "mealName": {"type": "string"},
-                                "source": {"type": "string"},
-                                "confidence": {
-                                    "type": "string",
-                                    "enum": ["high", "medium", "low"],
-                                },
-                                "comment": {"type": "string"},
-                                "components": {
-                                    "type": "array",
-                                    "items": {"$ref": "#/components/schemas/MealComponent"},
-                                },
-                            },
-                        },
-                    ]
-                },
-                "LogWorkoutRequest": {
-                    "allOf": [
-                        {"$ref": "#/components/schemas/BaseRequest"},
-                        {
-                            "type": "object",
-                            "required": ["action", "description", "exerciseCalories"],
-                            "properties": {
-                                "action": {"type": "string", "enum": ["log_workout"]},
-                                "description": {"type": "string"},
-                                "durationMin": {"type": "integer"},
-                                "exerciseCalories": {"type": "number"},
-                                "avgHr": {"type": "integer"},
-                                "note": {"type": "string"},
-                            },
-                        },
-                    ]
-                },
+                
             },
         },
     }
