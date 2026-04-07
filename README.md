@@ -158,11 +158,20 @@ TOKEN=your-duckdns-token
 
 What the script does:
 
+- updates the DuckDNS A record to your current public IP
 - installs `acme.sh` locally into the app folder
 - issues a Let's Encrypt certificate through the DuckDNS DNS challenge
 - stores the certificate in `certs/fullchain.pem` and `certs/privkey.pem`
 - keeps the local HTTP app on `:8000`
 - starts a second HTTPS instance on `:443` for GPT Actions
+
+To keep the public IP current, schedule:
+
+```sh
+sh deploy/home_assistant/update_duckdns_ip.sh
+```
+
+every few minutes on the Home Assistant host.
 
 After that, do one router step:
 

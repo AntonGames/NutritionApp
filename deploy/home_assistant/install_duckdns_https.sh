@@ -25,6 +25,8 @@ fi
 mkdir -p "$CERT_DIR"
 export HOME="$APP_DIR"
 
+sh "$SCRIPT_DIR/update_duckdns_ip.sh"
+
 if [ ! -x "$ACME_SH" ]; then
   curl -s https://get.acme.sh | sh -s email="$EMAIL"
 fi
