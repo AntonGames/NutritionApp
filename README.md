@@ -126,6 +126,59 @@ docker compose up -d --build
 
 If you are using the Home Assistant SSH add-on fallback instead of Docker, the same `.env` values still apply.
 
+## Stable free public HTTPS with DuckDNS on Home Assistant OS
+
+If you want the most stable free URL for GPT Actions without relying on temporary tunnels, use:
+
+- DuckDNS for the public hostname
+- Let's Encrypt for a real certificate
+- direct HTTPS serving from Nutrition App on port `443`
+
+This repository includes a deployment script for Home Assistant OS / Advanced SSH:
+
+```sh
+cd /config/NutritionApp
+DUCKDNS_DOMAIN=nutrition-app.duckdns.org \
+DUCKDNS_TOKEN=your-duckdns-token \
+sh deploy/home_assistant/install_duckdns_https.sh
+```
+
+You can also avoid putting the token on the command line by creating:
+
+```sh
+/config/NutritionApp/.duckdns.env
+```
+
+with:
+
+```sh
+DOMAIN=nutrition-app.duckdns.org
+TOKEN=your-duckdns-token
+```
+
+What the script does:
+
+- installs `acme.sh` locally into the app folder
+- issues a Let's Encrypt certificate through the DuckDNS DNS challenge
+- stores the certificate in `certs/fullchain.pem` and `certs/privkey.pem`
+- keeps the local HTTP app on `:8000`
+- starts a second HTTPS instance on `:443` for GPT Actions
+
+After that, do one router step:
+
+- forward external TCP `443` to your Home Assistant host on TCP `443`
+
+Then your stable schema URL becomes:
+
+- `https://nutrition-app.duckdns.org/api/actions/openapi.yaml`
+
+Important notes:
+
+- this path assumes your DuckDNS hostname already points to your public IP
+- if your ISP uses CG-NAT, normal port forwarding will not work
+- the script does not configure your router for you
+- `certs/` is runtime state and should not be committed
+
 ## GPT Actions setup
 
 ### Important networking note
@@ -139,6 +192,7 @@ Inference from the architecture:
 
 Typical ways to do that:
 
+- DuckDNS + Let's Encrypt + router port forwarding
 - Cloudflare Tunnel
 - your own reverse proxy + domain + TLS
 - another secure HTTPS tunnel you trust
