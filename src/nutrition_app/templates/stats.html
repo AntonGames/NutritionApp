@@ -5,9 +5,9 @@
 {% block content %}
   <section class="hero-card hero-card--stats">
     <div class="hero-copy">
-      <p class="eyebrow">Статистика по дням</p>
-      <h1>Здесь видно не только сегодня, но и темп всей системы</h1>
-      <p class="lede">
+      <p class="eyebrow" data-i18n="stats.eyebrow">Статистика по дням</p>
+      <h1 data-i18n="stats.title">Здесь видно не только сегодня, но и темп всей системы</h1>
+      <p class="lede" data-i18n="stats.lede">
         Вес, калории, белок, тренировки и недельные заметки собраны в одном месте. Меняйте период и смотрите,
         что происходит по дням, а не по ощущениям.
       </p>
@@ -22,32 +22,32 @@
 
   <section class="macro-grid macro-grid--stats">
     <article class="panel metric-panel">
-      <span>Средние калории</span>
+      <span data-i18n="stats.avgCalories">Средние калории</span>
       <strong id="stats-average-calories">{{ dashboard_data.highlights.average_net_calories }}</strong>
-      <small>чистыми в день</small>
+      <small data-i18n="stats.avgCaloriesNote">чистыми в день</small>
     </article>
     <article class="panel metric-panel">
-      <span>Средний белок</span>
+      <span data-i18n="stats.avgProtein">Средний белок</span>
       <strong id="stats-average-protein">{{ dashboard_data.highlights.average_protein_g }}</strong>
-      <small>г в день</small>
+      <small data-i18n="stats.gramsPerDay">г в день</small>
     </article>
     <article class="panel metric-panel">
-      <span>Изменение веса</span>
+      <span data-i18n="stats.weightChange">Изменение веса</span>
       <strong id="stats-weight-change">{{ dashboard_data.highlights.weight_change_kg if dashboard_data.highlights.weight_change_kg is not none else "—" }}</strong>
-      <small>за период</small>
+      <small data-i18n="stats.forPeriod">за период</small>
     </article>
     <article class="panel metric-panel">
-      <span>Тренировки</span>
+      <span data-i18n="stats.workouts">Тренировки</span>
       <strong id="stats-workouts">{{ dashboard_data.highlights.workout_sessions }}</strong>
-      <small>за период</small>
+      <small data-i18n="stats.forPeriod">за период</small>
     </article>
   </section>
 
   <section class="grid grid--stats">
     <article class="panel">
       <div class="panel-header">
-        <h2>Фокус по питанию</h2>
-        <span>что реально влияет на результат</span>
+        <h2 data-i18n="stats.focusTitle">Фокус по питанию</h2>
+        <span data-i18n="stats.focusCaption">что реально влияет на результат</span>
       </div>
       <ul class="tips" id="stats-focus-list">
         {% for tip in dashboard_data.focus %}
@@ -58,8 +58,8 @@
 
     <article class="panel">
       <div class="panel-header">
-        <h2>Недельные итоги</h2>
-        <span>по неделям</span>
+        <h2 data-i18n="stats.weeklyTitle">Недельные итоги</h2>
+        <span data-i18n="stats.weeklyCaption">по неделям</span>
       </div>
       <div class="weekly-list" id="weekly-list">
         {% for week in dashboard_data.weekly %}
@@ -76,16 +76,16 @@
   <section class="grid grid--stats">
     <article class="panel">
       <div class="panel-header">
-        <h2>Калории по дням</h2>
-        <span>чистые калории vs цель</span>
+        <h2 data-i18n="stats.caloriesChartTitle">Калории по дням</h2>
+        <span data-i18n="stats.caloriesChartCaption">чистые калории vs цель</span>
       </div>
       <div class="chart chart--tall" id="stats-calories-chart"></div>
     </article>
 
     <article class="panel">
       <div class="panel-header">
-        <h2>Белок по дням</h2>
-        <span>факт vs цель</span>
+        <h2 data-i18n="stats.proteinChartTitle">Белок по дням</h2>
+        <span data-i18n="stats.proteinChartCaption">факт vs цель</span>
       </div>
       <div class="chart chart--tall" id="stats-protein-chart"></div>
     </article>
@@ -94,16 +94,16 @@
   <section class="grid grid--stats">
     <article class="panel">
       <div class="panel-header">
-        <h2>Вес</h2>
-        <span>линия тренда</span>
+        <h2 data-i18n="stats.weightChartTitle">Вес</h2>
+        <span data-i18n="stats.weightChartCaption">линия тренда</span>
       </div>
       <div class="chart chart--tall" id="stats-weight-chart"></div>
     </article>
 
     <article class="panel">
       <div class="panel-header">
-        <h2>Активность</h2>
-        <span>тренировки и приемы пищи</span>
+        <h2 data-i18n="stats.activityChartTitle">Активность</h2>
+        <span data-i18n="stats.activityChartCaption">тренировки и приемы пищи</span>
       </div>
       <div class="chart chart--tall" id="stats-activity-chart"></div>
     </article>
@@ -111,21 +111,21 @@
 
   <section class="panel">
     <div class="panel-header">
-      <h2>Все по дням</h2>
-      <span>таблица для быстрой проверки</span>
+      <h2 data-i18n="stats.tableTitle">Все по дням</h2>
+      <span data-i18n="stats.tableCaption">таблица для быстрой проверки</span>
     </div>
     <div class="table-wrap">
       <table class="stats-table">
         <thead>
           <tr>
-            <th>Дата</th>
-            <th>Вес</th>
-            <th>Ккал</th>
-            <th>Белок</th>
-            <th>Жиры</th>
-            <th>Углеводы</th>
-            <th>Тренировки</th>
-            <th>Приемы пищи</th>
+            <th data-i18n="table.date">Дата</th>
+            <th data-i18n="table.weight">Вес</th>
+            <th data-i18n="table.kcal">Ккал</th>
+            <th data-i18n="table.protein">Белок</th>
+            <th data-i18n="table.fat">Жиры</th>
+            <th data-i18n="table.carbs">Углеводы</th>
+            <th data-i18n="table.workouts">Тренировки</th>
+            <th data-i18n="table.meals">Приемы пищи</th>
           </tr>
         </thead>
         <tbody id="stats-table-body">

@@ -78,6 +78,8 @@ def test_manual_meal_updates_daily_summary(app_state):
     summary = response.json()["daily_summary"]
     assert summary["food"]["calories"] == 520.0
     assert summary["food"]["protein_g"] == 37.0
+    assert summary["food_budget_left"] == 1880.0
+    assert summary["net_budget_left"] == 1880.0
     assert summary["meals_count"] == 1
 
 
@@ -178,6 +180,7 @@ def test_stats_dashboard_returns_history_and_focus(app_state):
     payload = response.json()
     assert len(payload["history"]) == 14
     assert payload["today"]["food"]["calories"] == 400.0
+    assert payload["today"]["food_budget_left"] == 2000.0
     assert payload["highlights"]["average_net_calories"] == 150.0
     assert payload["highlights"]["workout_sessions"] == 1
     assert payload["focus"]

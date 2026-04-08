@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ ui_lang or 'ru' }}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,11 +17,15 @@
         </span>
       </a>
       <nav class="topnav">
-        <a href="/" class="{% if active_page == 'home' %}is-active{% endif %}">Главная</a>
-        <a href="/stats" class="{% if active_page == 'stats' %}is-active{% endif %}">Статистика</a>
+        <a href="/" class="{% if active_page == 'home' %}is-active{% endif %}" data-i18n="nav.home">Главная</a>
+        <a href="/stats" class="{% if active_page == 'stats' %}is-active{% endif %}" data-i18n="nav.stats">Статистика</a>
       </nav>
       <div class="top-actions">
-        <a class="button ghost" href="{{ workbook_url }}">Скачать Excel</a>
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button type="button" class="lang-chip" data-set-lang="ru">RU</button>
+          <button type="button" class="lang-chip" data-set-lang="en">EN</button>
+        </div>
+        <a class="button ghost" href="{{ workbook_url }}" data-i18n="actions.downloadExcel">Скачать Excel</a>
         <a class="button ghost" href="{{ schema_url }}">OpenAPI</a>
       </div>
     </header>
@@ -37,7 +41,8 @@
         statsUrl: "/api/stats/dashboard",
         dailySummaryUrl: "/api/summary/daily",
         recentEventsUrl: "/api/events/recent",
-        workbookUrl: "{{ workbook_url }}"
+        workbookUrl: "{{ workbook_url }}",
+        initialLang: "{{ ui_lang or 'ru' }}"
       };
       window.NUTRITION_DASHBOARD = {{ dashboard_data | tojson }};
     </script>

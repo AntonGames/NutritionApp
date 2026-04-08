@@ -138,6 +138,32 @@ a {
   gap: 0.75rem;
 }
 
+.lang-switch {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(47, 107, 85, 0.12);
+}
+
+.lang-chip {
+  min-width: 3rem;
+  padding: 0.72rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang-chip.is-active {
+  background: linear-gradient(135deg, var(--green), #4d8b72);
+  color: #fff;
+}
+
 .shell {
   padding: 0.75rem 0 3rem;
 }
@@ -318,6 +344,12 @@ button:hover,
 
 .metric-tile.accent {
   background: linear-gradient(145deg, rgba(201, 101, 45, 0.16), rgba(255, 255, 255, 0.82));
+}
+
+.metric-note {
+  margin-top: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--muted);
 }
 
 .macro-grid {

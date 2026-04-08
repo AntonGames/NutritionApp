@@ -5,38 +5,39 @@
 {% block content %}
   <section class="hero-card hero-card--wide">
     <div class="hero-copy">
-      <p class="eyebrow">Еда, вес, тренировки и сводка в одном месте</p>
-      <h1>Дневной контроль выглядит как дашборд, а не как технический лог</h1>
-      <p class="lede">
+      <p class="eyebrow" data-i18n="home.eyebrow">Еда, вес, тренировки и сводка в одном месте</p>
+      <h1 data-i18n="home.title">Дневной контроль выглядит как дашборд, а не как технический лог</h1>
+      <p class="lede" data-i18n="home.lede">
         Фото еды можно отправлять через Custom GPT, а здесь сразу видеть, сколько уже съедено, сколько осталось до лимита,
         где проседает белок и как идет неделя.
       </p>
       <div class="hero-actions">
-        <a class="button" href="/stats">Открыть статистику</a>
-        <a class="button ghost" href="{{ workbook_url }}">Скачать Excel</a>
+        <a class="button" href="/stats" data-i18n="actions.openStats">Открыть статистику</a>
+        <a class="button ghost" href="{{ workbook_url }}" data-i18n="actions.downloadExcel">Скачать Excel</a>
       </div>
     </div>
 
     <div class="hero-summary">
       <div class="metric-tile">
-        <span>Калории сегодня</span>
+        <span data-i18n="kpi.foodCalories">Калории сегодня</span>
         <strong id="kpi-food-calories">{{ summary.food.calories }}</strong>
-        <small>из {{ summary.targets.calories }}</small>
+        <small id="kpi-food-calories-note">из {{ summary.targets.calories }}</small>
       </div>
       <div class="metric-tile accent">
-        <span>Остаток</span>
-        <strong id="kpi-calories-left">{{ summary.remaining.calories }}</strong>
-        <small>ккал до лимита</small>
+        <span data-i18n="kpi.foodLeft">До лимита по еде</span>
+        <strong id="kpi-food-left">{{ summary.food_budget_left }}</strong>
+        <small id="kpi-food-left-note">ккал без учета тренировок</small>
+        <div class="metric-note" id="kpi-net-left-note">С учетом тренировок: {{ summary.net_budget_left }} ккал</div>
       </div>
       <div class="metric-tile">
-        <span>Белок</span>
+        <span data-i18n="kpi.protein">Белок</span>
         <strong id="kpi-protein">{{ summary.food.protein_g }} г</strong>
-        <small>цель {{ summary.targets.protein_g }} г</small>
+        <small id="kpi-protein-note">цель {{ summary.targets.protein_g }} г</small>
       </div>
       <div class="metric-tile">
-        <span>Вес</span>
+        <span data-i18n="kpi.weight">Вес</span>
         <strong id="kpi-weight">{{ summary.weight_kg if summary.weight_kg is not none else "—" }}</strong>
-        <small>последняя запись</small>
+        <small data-i18n="kpi.weightNote">последняя запись</small>
       </div>
     </div>
   </section>
@@ -44,7 +45,7 @@
   <section class="macro-grid" id="macro-grid">
     <article class="panel macro-card">
       <div class="panel-header">
-        <h2>Калории</h2>
+        <h2 data-i18n="macro.calories">Калории</h2>
         <span id="macro-calories-caption">{{ summary.net_calories }} / {{ summary.targets.calories }}</span>
       </div>
       <div class="meter">
@@ -55,7 +56,7 @@
 
     <article class="panel macro-card">
       <div class="panel-header">
-        <h2>Белок</h2>
+        <h2 data-i18n="macro.protein">Белок</h2>
         <span id="macro-protein-caption">{{ summary.food.protein_g }} / {{ summary.targets.protein_g }} г</span>
       </div>
       <div class="meter">
@@ -66,7 +67,7 @@
 
     <article class="panel macro-card">
       <div class="panel-header">
-        <h2>Жиры</h2>
+        <h2 data-i18n="macro.fat">Жиры</h2>
         <span id="macro-fat-caption">{{ summary.food.fat_g }} / {{ summary.targets.fat_g }} г</span>
       </div>
       <div class="meter">
@@ -77,7 +78,7 @@
 
     <article class="panel macro-card">
       <div class="panel-header">
-        <h2>Углеводы</h2>
+        <h2 data-i18n="macro.carbs">Углеводы</h2>
         <span id="macro-carbs-caption">{{ summary.food.carbs_g }} / {{ summary.targets.carbs_g }} г</span>
       </div>
       <div class="meter">
@@ -90,8 +91,8 @@
   <section class="grid grid--balanced">
     <article class="panel">
       <div class="panel-header">
-        <h2>Что улучшить сегодня</h2>
-        <span>Фокус на питание</span>
+        <h2 data-i18n="home.focusTitle">Что улучшить сегодня</h2>
+        <span data-i18n="home.focusCaption">Фокус на питание</span>
       </div>
       <ul class="tips" id="today-focus-list">
         {% for tip in summary.suggestions %}
@@ -102,23 +103,23 @@
 
     <article class="panel">
       <div class="panel-header">
-        <h2>Динамика за 14 дней</h2>
-        <span>Быстрый взгляд</span>
+        <h2 data-i18n="home.trendTitle">Динамика за 14 дней</h2>
+        <span data-i18n="home.trendCaption">Быстрый взгляд</span>
       </div>
       <div class="chart-block">
         <div class="chart" id="home-calorie-chart"></div>
       </div>
       <div class="inline-stats">
         <div>
-          <span>Средние калории</span>
+          <span data-i18n="stats.avgCalories">Средние калории</span>
           <strong id="home-average-calories">{{ dashboard_data.highlights.average_net_calories }}</strong>
         </div>
         <div>
-          <span>Средний белок</span>
+          <span data-i18n="stats.avgProtein">Средний белок</span>
           <strong id="home-average-protein">{{ dashboard_data.highlights.average_protein_g }} г</strong>
         </div>
         <div>
-          <span>Тренировок</span>
+          <span data-i18n="stats.workouts">Тренировок</span>
           <strong id="home-workouts">{{ dashboard_data.highlights.workout_sessions }}</strong>
         </div>
       </div>
@@ -128,8 +129,8 @@
   <section class="grid grid--balanced">
     <article class="panel">
       <div class="panel-header">
-        <h2>Быстрые действия</h2>
-        <span>Обновляет дашборд сразу после сохранения</span>
+        <h2 data-i18n="home.quickActions">Быстрые действия</h2>
+        <span data-i18n="home.quickActionsCaption">Обновляет дашборд сразу после сохранения</span>
       </div>
 
       {% if photo_upload_enabled %}
@@ -156,69 +157,69 @@
         </form>
       {% else %}
         <div class="callout">
-          <strong>Фото еды идут через Custom GPT.</strong>
-          <p>
+          <strong data-i18n="home.photoViaGptTitle">Фото еды идут через Custom GPT.</strong>
+          <p data-i18n="home.photoViaGptBody">
             Загружайте фото в свой GPT, а этот сайт используйте как центр статистики, веса, тренировок и Excel-экспорта.
           </p>
-          <a class="button ghost" href="{{ schema_url }}">Открыть schema для GPT Actions</a>
+          <a class="button ghost" href="{{ schema_url }}" data-i18n="actions.openSchema">Открыть schema для GPT Actions</a>
         </div>
       {% endif %}
 
       <div class="split-forms">
         <form id="weight-form" class="stacked-form">
           <div class="panel-header secondary">
-            <h2>Вес</h2>
-            <span>быстрый ввод</span>
+            <h2 data-i18n="forms.weightTitle">Вес</h2>
+            <span data-i18n="forms.quickEntry">быстрый ввод</span>
           </div>
           <label>
-            Вес, кг
+            <span data-i18n="forms.weightLabel">Вес, кг</span>
             <input type="number" step="0.1" min="1" name="weight_kg" required />
           </label>
           <label>
-            Комментарий
-            <input type="text" name="note" placeholder="Например: утром после сна" />
+            <span data-i18n="forms.comment">Комментарий</span>
+            <input type="text" name="note" placeholder="Например: утром после сна" data-i18n-placeholder="placeholders.weightNote" />
           </label>
-          <button type="submit">Сохранить вес</button>
+          <button type="submit" data-i18n="actions.saveWeight">Сохранить вес</button>
         </form>
 
         <form id="workout-form" class="stacked-form">
           <div class="panel-header secondary">
-            <h2>Тренировка</h2>
-            <span>кардио или зал</span>
+            <h2 data-i18n="forms.workoutTitle">Тренировка</h2>
+            <span data-i18n="forms.workoutCaption">кардио или зал</span>
           </div>
           <label>
-            Описание
-            <input type="text" name="description" required placeholder="Прогулка, силовая, велотренажер" />
+            <span data-i18n="forms.description">Описание</span>
+            <input type="text" name="description" required placeholder="Прогулка, силовая, велотренажер" data-i18n-placeholder="placeholders.workoutDescription" />
           </label>
           <div class="row">
             <label>
-              Минуты
+              <span data-i18n="forms.minutes">Минуты</span>
               <input type="number" name="duration_min" min="1" />
             </label>
             <label>
-              Ккал
+              <span data-i18n="forms.kcal">Ккал</span>
               <input type="number" name="calories_burned" min="0" step="1" required />
             </label>
           </div>
           <div class="row">
             <label>
-              Пульс
+              <span data-i18n="forms.heartRate">Пульс</span>
               <input type="number" name="avg_hr" min="1" />
             </label>
             <label>
-              Комментарий
-              <input type="text" name="note" placeholder="Например: вечерняя сессия" />
+              <span data-i18n="forms.comment">Комментарий</span>
+              <input type="text" name="note" placeholder="Например: вечерняя сессия" data-i18n-placeholder="placeholders.workoutNote" />
             </label>
           </div>
-          <button type="submit">Сохранить тренировку</button>
+          <button type="submit" data-i18n="actions.saveWorkout">Сохранить тренировку</button>
         </form>
       </div>
     </article>
 
     <article class="panel">
       <div class="panel-header">
-        <h2>Последние записи</h2>
-        <span>живой журнал</span>
+        <h2 data-i18n="home.recentTitle">Последние записи</h2>
+        <span data-i18n="home.recentCaption">живой журнал</span>
       </div>
       <ul class="events" id="recent-events">
         {% for event in recent_events %}
@@ -232,12 +233,12 @@
 
       <div class="result-panel">
         <div class="panel-header secondary">
-          <h2>Ответ API</h2>
-          <span>{% if api_key_required %}нужен API key{% else %}доступ без ключа{% endif %}</span>
+          <h2 data-i18n="home.apiResponse">Ответ API</h2>
+          <span data-i18n="{% if api_key_required %}home.apiKeyRequired{% else %}home.openAccess{% endif %}">{% if api_key_required %}нужен API key{% else %}доступ без ключа{% endif %}</span>
         </div>
         <label class="api-key">
           API key
-          <input id="api-key" type="password" placeholder="Только если включен NUTRITION_API_KEY" />
+          <input id="api-key" type="password" placeholder="Только если включен NUTRITION_API_KEY" data-i18n-placeholder="placeholders.apiKey" />
         </label>
         <pre id="result">Готово к работе.</pre>
       </div>

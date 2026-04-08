@@ -60,6 +60,10 @@ def _resolve_timestamp(profile: ProfileConfig, *, incoming_date: date | None, in
     return datetime.combine(incoming_date or now.date(), incoming_time or now.timetz().replace(tzinfo=None), tzinfo=zone)
 
 
+def _normalize_lang(lang: str | None) -> str:
+    return "en" if (lang or "").lower().startswith("en") else "ru"
+
+
 def _build_action_summary(summary: DailySummary) -> ActionSummary:
     return ActionSummary(
         date=summary.date,
@@ -84,11 +88,11 @@ def _build_action_summary(summary: DailySummary) -> ActionSummary:
     )
 
 
-def _build_stats_payload(state: "AppState", *, end_date: date | None = None, days: int = 30) -> StatsDashboard:
+def _build_stats_payload(state: "AppState", *, end_date: date | None = None, days: int = 30, lang: str = "ru") -> StatsDashboard:
     zone = _local_zone(state.profile)
     resolved_end = end_date or datetime.now(tz=zone).date()
     safe_days = max(7, min(days, 180))
-    return state.summary_service.build_stats_dashboard(days=safe_days, end_date=resolved_end)
+    return state.summary_service.build_stats_dashboard(days=safe_days, end_date=resolved_end, lang=_normalize_lang(lang))
 
 
 @dataclass(slots=True)
@@ -175,11 +179,12 @@ def create_app(state: AppState | None = None) -> FastAPI:
             state.ensure_workbook()
 
     @app.get("/", response_class=HTMLResponse)
-    async def home(request: Request, state: AppState = Depends(get_state)) -> HTMLResponse:
+    async def home(request: Request, lang: str | None = None, state: AppState = Depends(get_state)) -> HTMLResponse:
         today = datetime.now(tz=_local_zone(state.profile)).date()
-        summary = state.summary_service.build_daily_summary(today)
+        ui_lang = _normalize_lang(lang)
+        summary = state.summary_service.build_daily_summary(today, lang=ui_lang)
         recent_events = state.database.get_recent_events()
-        dashboard = _build_stats_payload(state, end_date=today, days=14)
+        dashboard = _build_stats_payload(state, end_date=today, days=14, lang=ui_lang)
         return state.templates.TemplateResponse(
             request,
             "index.html",
@@ -195,13 +200,15 @@ def create_app(state: AppState | None = None) -> FastAPI:
                 "api_key_required": bool(state.settings.api_key),
                 "photo_upload_enabled": bool(state.settings.openai_api_key),
                 "active_page": "home",
+                "ui_lang": ui_lang,
             },
         )
 
     @app.get("/stats", response_class=HTMLResponse)
-    async def stats_page(request: Request, state: AppState = Depends(get_state)) -> HTMLResponse:
+    async def stats_page(request: Request, lang: str | None = None, state: AppState = Depends(get_state)) -> HTMLResponse:
         today = datetime.now(tz=_local_zone(state.profile)).date()
-        dashboard = _build_stats_payload(state, end_date=today, days=30)
+        ui_lang = _normalize_lang(lang)
+        dashboard = _build_stats_payload(state, end_date=today, days=30, lang=ui_lang)
         return state.templates.TemplateResponse(
             request,
             "stats.html",
@@ -212,6 +219,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
                 "schema_url": "/api/actions/openapi.yaml",
                 "api_key_required": bool(state.settings.api_key),
                 "active_page": "stats",
+                "ui_lang": ui_lang,
             },
         )
 
@@ -225,21 +233,21 @@ def create_app(state: AppState | None = None) -> FastAPI:
         }
 
     @app.get("/api/summary/daily")
-    async def daily_summary(target_date: str | None = None, state: AppState = Depends(get_state)) -> dict[str, Any]:
+    async def daily_summary(target_date: str | None = None, lang: str | None = None, state: AppState = Depends(get_state)) -> dict[str, Any]:
         zone = _local_zone(state.profile)
         resolved_date = date.fromisoformat(target_date) if target_date else datetime.now(tz=zone).date()
-        summary = state.summary_service.build_daily_summary(resolved_date)
+        summary = state.summary_service.build_daily_summary(resolved_date, lang=_normalize_lang(lang))
         return summary.model_dump()
 
     @app.get("/api/summary/weekly")
-    async def weekly_summary(state: AppState = Depends(get_state)) -> list[dict[str, Any]]:
-        return [item.model_dump() for item in state.summary_service.build_weekly_summary()]
+    async def weekly_summary(lang: str | None = None, state: AppState = Depends(get_state)) -> list[dict[str, Any]]:
+        return [item.model_dump() for item in state.summary_service.build_weekly_summary(lang=_normalize_lang(lang))]
 
     @app.get("/api/stats/dashboard")
-    async def stats_dashboard(days: int = 30, target_date: str | None = None, state: AppState = Depends(get_state)) -> dict[str, Any]:
+    async def stats_dashboard(days: int = 30, target_date: str | None = None, lang: str | None = None, state: AppState = Depends(get_state)) -> dict[str, Any]:
         zone = _local_zone(state.profile)
         resolved_date = date.fromisoformat(target_date) if target_date else datetime.now(tz=zone).date()
-        dashboard = _build_stats_payload(state, end_date=resolved_date, days=days)
+        dashboard = _build_stats_payload(state, end_date=resolved_date, days=days, lang=_normalize_lang(lang))
         return dashboard.model_dump()
 
     @app.get("/api/events/recent")
@@ -258,10 +266,10 @@ def create_app(state: AppState | None = None) -> FastAPI:
         return PlainTextResponse(document, media_type="application/yaml")
 
     @app.get("/api/actions/summary", response_model=ActionResponse, dependencies=[Depends(require_api_key)])
-    async def action_summary(target_date: str | None = None, state: AppState = Depends(get_state)) -> ActionResponse:
+    async def action_summary(target_date: str | None = None, lang: str | None = None, state: AppState = Depends(get_state)) -> ActionResponse:
         zone = _local_zone(state.profile)
         resolved_date = date.fromisoformat(target_date) if target_date else datetime.now(tz=zone).date()
-        summary = state.summary_service.build_daily_summary(resolved_date)
+        summary = state.summary_service.build_daily_summary(resolved_date, lang=_normalize_lang(lang))
         return ActionResponse(action="summary", date=summary.date, summary=_build_action_summary(summary))
 
     @app.post("/api/actions", response_model=ActionResponse, dependencies=[Depends(require_api_key)])

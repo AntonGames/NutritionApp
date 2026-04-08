@@ -86,6 +86,8 @@ class DailySummary(BaseModel):
     net_calories: float
     targets: DailyMacroSnapshot
     remaining: DailyMacroSnapshot
+    food_budget_left: float
+    net_budget_left: float
     meals_count: int
     workouts_count: int
     suggestions: list[str]
