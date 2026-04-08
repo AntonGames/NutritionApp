@@ -143,3 +143,55 @@ def test_api_key_required_for_write(app_state):
     client = TestClient(app)
     response = client.post("/api/weights", json={"weight_kg": 108.4})
     assert response.status_code == 401
+
+
+def test_stats_dashboard_returns_history_and_focus(app_state):
+    app = create_app(app_state)
+    client = TestClient(app)
+    headers = {"X-API-Key": "secret"}
+
+    client.post(
+        "/api/meals/manual",
+        json={
+            "meal_name": "Lunch",
+            "components": [
+                {
+                    "description": "Chicken",
+                    "calories": 400,
+                    "protein_g": 45,
+                    "fat_g": 18,
+                    "carbs_g": 10,
+                }
+            ],
+        },
+        headers=headers,
+    )
+    client.post("/api/weights", json={"weight_kg": 108.4}, headers=headers)
+    client.post(
+        "/api/workouts",
+        json={"description": "Walk", "duration_min": 40, "calories_burned": 250},
+        headers=headers,
+    )
+
+    response = client.get("/api/stats/dashboard?days=14")
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["history"]) == 14
+    assert payload["today"]["food"]["calories"] == 400.0
+    assert payload["highlights"]["average_net_calories"] == 150.0
+    assert payload["highlights"]["workout_sessions"] == 1
+    assert payload["focus"]
+
+
+def test_pages_render_stats_and_workbook_links(app_state):
+    app = create_app(app_state)
+    client = TestClient(app)
+
+    home = client.get("/")
+    stats = client.get("/stats")
+
+    assert home.status_code == 200
+    assert stats.status_code == 200
+    assert "/api/export/workbook" in home.text
+    assert "/stats" in home.text
+    assert "stats-table-body" in stats.text

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Nutrition App | Статистика{% endblock %}
+
+{% block content %}
+  <section class="hero-card hero-card--stats">
+    <div class="hero-copy">
+      <p class="eyebrow">Статистика по дням</p>
+      <h1>Здесь видно не только сегодня, но и темп всей системы</h1>
+      <p class="lede">
+        Вес, калории, белок, тренировки и недельные заметки собраны в одном месте. Меняйте период и смотрите,
+        что происходит по дням, а не по ощущениям.
+      </p>
+    </div>
+    <div class="range-switch" id="range-switch">
+      <button class="chip" data-range="14" type="button">14 дней</button>
+      <button class="chip is-active" data-range="30" type="button">30 дней</button>
+      <button class="chip" data-range="60" type="button">60 дней</button>
+      <button class="chip" data-range="90" type="button">90 дней</button>
+    </div>
+  </section>
+
+  <section class="macro-grid macro-grid--stats">
+    <article class="panel metric-panel">
+      <span>Средние калории</span>
+      <strong id="stats-average-calories">{{ dashboard_data.highlights.average_net_calories }}</strong>
+      <small>чистыми в день</small>
+    </article>
+    <article class="panel metric-panel">
+      <span>Средний белок</span>
+      <strong id="stats-average-protein">{{ dashboard_data.highlights.average_protein_g }}</strong>
+      <small>г в день</small>
+    </article>
+    <article class="panel metric-panel">
+      <span>Изменение веса</span>
+      <strong id="stats-weight-change">{{ dashboard_data.highlights.weight_change_kg if dashboard_data.highlights.weight_change_kg is not none else "—" }}</strong>
+      <small>за период</small>
+    </article>
+    <article class="panel metric-panel">
+      <span>Тренировки</span>
+      <strong id="stats-workouts">{{ dashboard_data.highlights.workout_sessions }}</strong>
+      <small>за период</small>
+    </article>
+  </section>
+
+  <section class="grid grid--stats">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Фокус по питанию</h2>
+        <span>что реально влияет на результат</span>
+      </div>
+      <ul class="tips" id="stats-focus-list">
+        {% for tip in dashboard_data.focus %}
+          <li>{{ tip }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Недельные итоги</h2>
+        <span>по неделям</span>
+      </div>
+      <div class="weekly-list" id="weekly-list">
+        {% for week in dashboard_data.weekly %}
+          <article class="weekly-item">
+            <strong>{{ week.week_start }}</strong>
+            <span>{{ week.average_food_calories }} ккал в среднем, белок {{ week.average_protein_g }} г</span>
+            <small>{{ week.coach_note }}</small>
+          </article>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="grid grid--stats">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Калории по дням</h2>
+        <span>чистые калории vs цель</span>
+      </div>
+      <div class="chart chart--tall" id="stats-calories-chart"></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Белок по дням</h2>
+        <span>факт vs цель</span>
+      </div>
+      <div class="chart chart--tall" id="stats-protein-chart"></div>
+    </article>
+  </section>
+
+  <section class="grid grid--stats">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Вес</h2>
+        <span>линия тренда</span>
+      </div>
+      <div class="chart chart--tall" id="stats-weight-chart"></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Активность</h2>
+        <span>тренировки и приемы пищи</span>
+      </div>
+      <div class="chart chart--tall" id="stats-activity-chart"></div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Все по дням</h2>
+      <span>таблица для быстрой проверки</span>
+    </div>
+    <div class="table-wrap">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Вес</th>
+            <th>Ккал</th>
+            <th>Белок</th>
+            <th>Жиры</th>
+            <th>Углеводы</th>
+            <th>Тренировки</th>
+            <th>Приемы пищи</th>
+          </tr>
+        </thead>
+        <tbody id="stats-table-body">
+          {% for row in dashboard_data.history %}
+            <tr>
+              <td>{{ row.date }}</td>
+              <td>{{ row.weight_kg if row.weight_kg is not none else "—" }}</td>
+              <td>{{ row.net_calories }}</td>
+              <td>{{ row.protein_g }}</td>
+              <td>{{ row.fat_g }}</td>
+              <td>{{ row.carbs_g }}</td>
+              <td>{{ row.workouts_count }}</td>
+              <td>{{ row.meals_count }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

@@ -102,6 +102,46 @@ class WeeklySummaryRow(BaseModel):
     coach_note: str
 
 
+class DailyHistoryPoint(BaseModel):
+    date: str
+    label: str
+    weight_kg: float | None = None
+    food_calories: float
+    exercise_calories: float
+    net_calories: float
+    protein_g: float
+    fat_g: float
+    carbs_g: float
+    meals_count: int
+    workouts_count: int
+    calorie_target: float
+    protein_target: float
+    fat_target: float
+    carb_target: float
+    calorie_delta: float
+    protein_delta: float
+    logged: bool
+
+
+class StatsHighlights(BaseModel):
+    period_days: int
+    logged_days: int
+    average_food_calories: float
+    average_net_calories: float
+    average_protein_g: float
+    workout_sessions: int
+    average_weight_kg: float | None = None
+    weight_change_kg: float | None = None
+
+
+class StatsDashboard(BaseModel):
+    today: DailySummary
+    history: list[DailyHistoryPoint]
+    weekly: list[WeeklySummaryRow]
+    focus: list[str]
+    highlights: StatsHighlights
+
+
 class RecentEvent(BaseModel):
     kind: Literal["meal", "weight", "workout"]
     logged_at: str

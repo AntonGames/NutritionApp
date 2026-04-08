@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Nutrition App{% endblock %}</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <header class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark">N</span>
+        <span>
+          <strong>Nutrition App</strong>
+          <small>Pi-hosted dashboard</small>
+        </span>
+      </a>
+      <nav class="topnav">
+        <a href="/" class="{% if active_page == 'home' %}is-active{% endif %}">Главная</a>
+        <a href="/stats" class="{% if active_page == 'stats' %}is-active{% endif %}">Статистика</a>
+      </nav>
+      <div class="top-actions">
+        <a class="button ghost" href="{{ workbook_url }}">Скачать Excel</a>
+        <a class="button ghost" href="{{ schema_url }}">OpenAPI</a>
+      </div>
+    </header>
+
+    <main class="shell">
+      {% block content %}{% endblock %}
+    </main>
+
+    <script>
+      window.NUTRITION_UI = {
+        apiKeyRequired: {{ "true" if api_key_required else "false" }},
+        activePage: "{{ active_page }}",
+        statsUrl: "/api/stats/dashboard",
+        dailySummaryUrl: "/api/summary/daily",
+        recentEventsUrl: "/api/events/recent",
+        workbookUrl: "{{ workbook_url }}"
+      };
+      window.NUTRITION_DASHBOARD = {{ dashboard_data | tojson }};
+    </script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

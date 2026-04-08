@@ -389,21 +389,24 @@ class Database:
             weights_by_day[row["local_date"]] = _round1(row["weight_kg"])
 
         known_dates = set(meals_by_day) | set(workouts_by_day) | set(weights_by_day)
-        if not known_dates:
-            return []
-
-        first_date = min(date.fromisoformat(item) for item in known_dates)
-        last_date = max(date.fromisoformat(item) for item in known_dates)
-        if start_date is not None:
-            first_date = max(first_date, start_date)
-        if end_date is not None:
-            last_date = min(last_date, end_date)
+        if start_date is not None and end_date is not None:
+            first_date = start_date
+            last_date = end_date
+        else:
+            if not known_dates:
+                return []
+            first_date = min(date.fromisoformat(item) for item in known_dates)
+            last_date = max(date.fromisoformat(item) for item in known_dates)
+            if start_date is not None:
+                first_date = max(first_date, start_date)
+            if end_date is not None:
+                last_date = min(last_date, end_date)
         if first_date > last_date:
             return []
 
         results: list[dict[str, Any]] = []
         current = first_date
-        latest_weight: float | None = None
+        latest_weight = self.get_latest_weight_on_or_before(first_date.isoformat())
         while current <= last_date:
             day_key = current.isoformat()
             if day_key in weights_by_day:

@@ -26,6 +26,7 @@ from .schemas import (
     LogWeightAction,
     LogWorkoutAction,
     ManualMealCreate,
+    StatsDashboard,
     WeightCreate,
     WorkoutCreate,
 )
@@ -83,6 +84,13 @@ def _build_action_summary(summary: DailySummary) -> ActionSummary:
     )
 
 
+def _build_stats_payload(state: "AppState", *, end_date: date | None = None, days: int = 30) -> StatsDashboard:
+    zone = _local_zone(state.profile)
+    resolved_end = end_date or datetime.now(tz=zone).date()
+    safe_days = max(7, min(days, 180))
+    return state.summary_service.build_stats_dashboard(days=safe_days, end_date=resolved_end)
+
+
 @dataclass(slots=True)
 class AppState:
     settings: Settings
@@ -111,7 +119,10 @@ def create_state(root: Path | None = None) -> AppState:
     database.initialize()
     summary_service = SummaryService(database=database, profile=profile)
     workbook_exporter = WorkbookExporter(database=database, profile=profile, summary_service=summary_service)
-    templates = Jinja2Templates(directory=str(root / "src/nutrition_app/templates"))
+    template_dir = root / "src/nutrition_app/templates"
+    if not template_dir.exists():
+        template_dir = Path(__file__).resolve().parent / "templates"
+    templates = Jinja2Templates(directory=str(template_dir))
     return AppState(
         settings=settings,
         profile=profile,
@@ -168,6 +179,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
         today = datetime.now(tz=_local_zone(state.profile)).date()
         summary = state.summary_service.build_daily_summary(today)
         recent_events = state.database.get_recent_events()
+        dashboard = _build_stats_payload(state, end_date=today, days=14)
         return state.templates.TemplateResponse(
             request,
             "index.html",
@@ -175,9 +187,31 @@ def create_app(state: AppState | None = None) -> FastAPI:
                 "profile": state.profile,
                 "summary": summary,
                 "recent_events": recent_events,
+                "dashboard_data": dashboard.model_dump(),
                 "workbook_path": state.settings.workbook_path.name,
+                "workbook_url": "/api/export/workbook",
+                "stats_url": "/stats",
+                "schema_url": "/api/actions/openapi.yaml",
                 "api_key_required": bool(state.settings.api_key),
                 "photo_upload_enabled": bool(state.settings.openai_api_key),
+                "active_page": "home",
+            },
+        )
+
+    @app.get("/stats", response_class=HTMLResponse)
+    async def stats_page(request: Request, state: AppState = Depends(get_state)) -> HTMLResponse:
+        today = datetime.now(tz=_local_zone(state.profile)).date()
+        dashboard = _build_stats_payload(state, end_date=today, days=30)
+        return state.templates.TemplateResponse(
+            request,
+            "stats.html",
+            {
+                "profile": state.profile,
+                "dashboard_data": dashboard.model_dump(),
+                "workbook_url": "/api/export/workbook",
+                "schema_url": "/api/actions/openapi.yaml",
+                "api_key_required": bool(state.settings.api_key),
+                "active_page": "stats",
             },
         )
 
@@ -200,6 +234,13 @@ def create_app(state: AppState | None = None) -> FastAPI:
     @app.get("/api/summary/weekly")
     async def weekly_summary(state: AppState = Depends(get_state)) -> list[dict[str, Any]]:
         return [item.model_dump() for item in state.summary_service.build_weekly_summary()]
+
+    @app.get("/api/stats/dashboard")
+    async def stats_dashboard(days: int = 30, target_date: str | None = None, state: AppState = Depends(get_state)) -> dict[str, Any]:
+        zone = _local_zone(state.profile)
+        resolved_date = date.fromisoformat(target_date) if target_date else datetime.now(tz=zone).date()
+        dashboard = _build_stats_payload(state, end_date=resolved_date, days=days)
+        return dashboard.model_dump()
 
     @app.get("/api/events/recent")
     async def recent_events(state: AppState = Depends(get_state)) -> list[dict[str, Any]]:
