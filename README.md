@@ -138,7 +138,7 @@ This repository includes a deployment script for Home Assistant OS / Advanced SS
 
 ```sh
 cd /config/NutritionApp
-DUCKDNS_DOMAIN=nutrition-app.duckdns.org \
+DUCKDNS_DOMAIN=your-subdomain.duckdns.org \
 DUCKDNS_TOKEN=your-duckdns-token \
 sh deploy/home_assistant/install_duckdns_https.sh
 ```
@@ -152,7 +152,7 @@ You can also avoid putting the token on the command line by creating:
 with:
 
 ```sh
-DOMAIN=nutrition-app.duckdns.org
+DOMAIN=your-subdomain.duckdns.org
 TOKEN=your-duckdns-token
 ```
 
@@ -179,7 +179,7 @@ After that, do one router step:
 
 Then your stable schema URL becomes:
 
-- `https://nutrition-app.duckdns.org/api/actions/openapi.yaml`
+- `https://your-subdomain.duckdns.org/api/actions/openapi.yaml`
 
 Important notes:
 
@@ -192,7 +192,7 @@ Important notes:
 
 ### Important networking note
 
-Your local URL such as `http://192.168.0.243:8000` is fine for the web UI and Home Assistant on your LAN, but ChatGPT Actions will need a URL that ChatGPT can reach.
+Your local URL such as `http://YOUR_PI_IP:8000` is fine for the web UI and Home Assistant on your LAN, but ChatGPT Actions will need a URL that ChatGPT can reach.
 
 Inference from the architecture:
 

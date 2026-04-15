@@ -18,7 +18,7 @@ DOMAIN=${DUCKDNS_DOMAIN:-${DOMAIN:-}}
 TOKEN=${DUCKDNS_TOKEN:-${TOKEN:-}}
 
 if [ -z "$DOMAIN" ] || [ -z "$TOKEN" ]; then
-  echo "Usage: DUCKDNS_DOMAIN=nutrition-app.duckdns.org DUCKDNS_TOKEN=... sh deploy/home_assistant/install_duckdns_https.sh" >&2
+  echo "Usage: DUCKDNS_DOMAIN=your-subdomain.duckdns.org DUCKDNS_TOKEN=... sh deploy/home_assistant/install_duckdns_https.sh" >&2
   exit 1
 fi
 
