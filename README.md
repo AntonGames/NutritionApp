@@ -177,6 +177,24 @@ After that, do one router step:
 
 - forward external TCP `443` to your Home Assistant host on TCP `443`
 
+### Self-healing watchdog on Home Assistant OS
+
+If you keep this app on Home Assistant OS instead of moving it to a normal Docker host, add the watchdog too:
+
+```sh
+cd /config/NutritionApp
+printf '%s\n' 'YOUR_SUDO_PASSWORD' | sudo -S sh deploy/home_assistant/install_watchdog.sh
+sh deploy/home_assistant/watchdog.sh
+```
+
+What it does:
+
+- installs a symlink into `/etc/periodic/15min`
+- checks local HTTP and HTTPS health every 15 minutes
+- restarts the app listeners if either one is down
+
+This does not make the HA OS approach perfect, but it gives you automatic recovery instead of waiting for a manual SSH restart.
+
 Then your stable schema URL becomes:
 
 - `https://your-subdomain.duckdns.org/api/actions/openapi.yaml`
