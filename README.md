@@ -195,6 +195,26 @@ What it does:
 
 This does not make the HA OS approach perfect, but it gives you automatic recovery instead of waiting for a manual SSH restart.
 
+### Persistent startup via Advanced SSH & Web Terminal
+
+On Home Assistant OS, `/etc` is ephemeral, so standalone cron or `/etc/periodic` changes may disappear after reboot.
+The more durable approach is to use the add-on's persistent `init_commands`:
+
+```sh
+cd /homeassistant/NutritionApp
+printf '%s\n' 'YOUR_SUDO_PASSWORD' | sudo -S sh deploy/home_assistant/install_ssh_addon_autostart.sh
+```
+
+What it configures in the SSH add-on:
+
+- waits briefly for mounts to settle
+- reinstalls the watchdog symlink after each add-on start
+- starts the HTTP listener
+- starts the HTTPS listener
+- removes the old inline watchdog command if it was previously installed
+
+After running it, restart the `Advanced SSH & Web Terminal` add-on once so the new `init_commands` take effect immediately.
+
 Then your stable schema URL becomes:
 
 - `https://your-subdomain.duckdns.org/api/actions/openapi.yaml`
