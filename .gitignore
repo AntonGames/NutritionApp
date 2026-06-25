@@ -12,8 +12,12 @@ __pycache__/
 *.tmp
 *.bak
 .env
+.duckdns.env
 data/uploads/
 data/exports/*.xlsx
 !data/exports/.gitkeep
+certs/
 nutrition_tracker_system_bundle.zip
 nutrition_tracker_template.xlsx
+diagnostics/
+server-backups/
